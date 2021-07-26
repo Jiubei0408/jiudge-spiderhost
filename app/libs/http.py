@@ -20,8 +20,8 @@ class Http:
     def post(self, **kwargs):
         return self._request('POST', **kwargs)
 
-    def _request(self, method: str, url: str, params: dict = None, data: dict = None,
-                 encoding: str = 'utf8', headers: dict = None) -> Response:
+    def _request(self, method: str, url: str, params: dict = None, data: dict = None, json: dict = None,
+                 encoding: str = 'utf8', headers: dict = None, noprint=False) -> Response:
         """
         http请求
         :param method: 请求方法
@@ -33,14 +33,18 @@ class Http:
         """
         if headers:
             self.headers.update(headers)
-        url, data = self._before_request(url, params, data)
-        res = self.sess.request(method, url=url, data=data, timeout=30)
+        url, data, json = self._before_request(url, params, data, json)
+        if data is not None:
+            res = self.sess.request(method, url=url, data=data, timeout=30)
+        else:
+            res = self.sess.request(method, url=url, json=json, timeout=30)
         res = self._end_request(res, encoding)
-        print(url, res.status_code)
+        if not noprint:
+            print(method, url, res.status_code)
         return res
 
     @staticmethod
-    def _before_request(url: str, params: dict, data: dict) -> (str, str):
+    def _before_request(url: str, params: dict, data: dict, json: dict) -> (str, str):
         """
         request之前的准备，可根据逻辑重载
         :param url: url
@@ -49,7 +53,7 @@ class Http:
         :return: url，data元组
         """
         # 逻辑写这里
-        return url, data
+        return url, data, json
 
     @staticmethod
     def _end_request(res: Response, encoding: str) -> Response:
