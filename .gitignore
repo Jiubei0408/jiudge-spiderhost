@@ -115,4 +115,4 @@ dmypy.json
 
 .idea/
 
-config/secure.py
+secure.py
