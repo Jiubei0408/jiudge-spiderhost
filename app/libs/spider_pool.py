@@ -92,6 +92,7 @@ class SpiderPool:
             thread = SpiderThread(spider_class(username, password))
             self.pool[oj_name].append(thread)
             thread.start()
+            time.sleep(.5)
 
     @staticmethod
     def get_spider_class(oj_name: str):

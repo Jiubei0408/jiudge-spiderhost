@@ -17,7 +17,7 @@ class DomjudgeSpider(BaseSpider):
     def login(self):
         url = self.base_url + '/login'
         res = self.http.get(url=url, noprint=True)
-        if res.status_code == 302:
+        if len(res.history) > 0:
             return
         soup = BeautifulSoup(res.text, 'lxml')
         csrf_token = soup.find('input', attrs={'name': '_csrf_token'})['value']
@@ -26,13 +26,20 @@ class DomjudgeSpider(BaseSpider):
             '_username': self.username,
             '_password': self.password
         })
+        print('login:' + self.username)
 
     def check_login(self):
-        url = self.base_url + '/team'
-        res = self.http.get(url=url, noprint=True)
-        if res.status_code == 200:
-            return True
-        self.login()
+        cnt = 0
+        while cnt < 10:
+            url = self.base_url + '/team'
+            res = self.http.get(url=url, noprint=True)
+            if len(res.history) == 0:
+                return True
+            self.login()
+            cnt += 1
+            time.sleep(1)
+        print(self.oj_name + ' login failed: ' + self.username)
+        return False
 
     def get_contest_meta(self, contest_id):
         self.check_login()
