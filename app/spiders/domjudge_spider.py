@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 import time
 
@@ -39,7 +40,10 @@ class DomjudgeSpider(BaseSpider):
             cnt += 1
             time.sleep(1)
         print(self.oj_name + ' login failed: ' + self.username)
-        return False
+        raise Exception(json.dumps({
+            'type': 'login error',
+            'req_text': res.text
+        }))
 
     def get_contest_meta(self, contest_id):
         self.check_login()
@@ -69,11 +73,11 @@ class DomjudgeSpider(BaseSpider):
             limits = card.find('h5').text
             limits = limits.replace('\n', '').replace(' ', '')
             try:
-                timelimit = float(re.findall(r'(\d+\.?\d?)second', limits)[0])
+                timelimit = float(re.findall(r'(\d+\.?\d*)second', limits)[0])
             except:
                 timelimit = -1
             try:
-                spacelimit = float(re.findall(r'(\d+\.?\d?)MB', limits)[0]) * 1024
+                spacelimit = float(re.findall(r'(\d+\.?\d*)MB', limits)[0]) * 1024
             except:
                 spacelimit = -1
             problems.append({
