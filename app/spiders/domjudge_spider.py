@@ -22,12 +22,17 @@ class DomjudgeSpider(BaseSpider):
             return
         soup = BeautifulSoup(res.text, 'lxml')
         csrf_token = soup.find('input', attrs={'name': '_csrf_token'})['value']
-        self.http.post(url=url, data={
+        data = {
             '_csrf_token': csrf_token,
             '_username': self.username,
             '_password': self.password
-        })
+        }
+        resp = self.http.post(url=url, data=data)
         print('login:' + self.username)
+        return {
+            'resp_text': resp.text,
+            'data': data
+        }
 
     def check_login(self):
         cnt = 0
@@ -36,13 +41,14 @@ class DomjudgeSpider(BaseSpider):
             res = self.http.get(url=url, noprint=True)
             if len(res.history) == 0:
                 return True
-            self.login()
+            login_res = self.login()
             cnt += 1
             time.sleep(1)
         print(self.oj_name + ' login failed: ' + self.username)
         raise Exception(json.dumps({
             'type': 'login error',
-            'req_text': res.text
+            'req_text': res.text,
+            'login_req_text': login_res
         }))
 
     def get_contest_meta(self, contest_id):
