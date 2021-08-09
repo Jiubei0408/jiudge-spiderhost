@@ -115,4 +115,5 @@ dmypy.json
 
 .idea/
 
-secure.py
+app/config/secure.py
+app/config/accounts.py
