@@ -53,6 +53,7 @@ class DomjudgeSpider(BaseSpider):
 
     def get_contest_meta(self, contest_id):
         self.check_login()
+        self.switch_contest(contest_id)
         url = self.base_url + '/team/problems'
         res = self.http.get(url=url)
         soup = BeautifulSoup(res.text, 'lxml')
@@ -101,6 +102,7 @@ class DomjudgeSpider(BaseSpider):
 
     def submit_contest_problem(self, contest_id, problem_id, code, lang):
         self.check_login()
+        self.switch_contest(contest_id)
         if lang not in ['c', 'cpp', 'java', 'py3']:
             raise Exception('language error')
         from urllib3 import encode_multipart_formdata
@@ -143,8 +145,10 @@ class DomjudgeSpider(BaseSpider):
             if finished:
                 return status
 
+    def switch_contest(self, contest_cid):
+        self.http.get(url=self.base_url + f'/team/change-contest/{contest_cid}')
+
     def get_last_problem_status(self):
-        self.check_login()
         data = {
             'compile_info': 'There were no compiler errors or warnings.',
             'time_used': -1,
