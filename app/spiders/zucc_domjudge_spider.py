@@ -1,16 +1,11 @@
 from app.spiders.domjudge_spider import DomjudgeSpider
+from app.config.accounts import zucc_domjudge_accounts
 
 
 class ZuccDomjudgeSpider(DomjudgeSpider):
     oj_name = 'zucc-domjudge'
     base_url = 'http://domjudge.newitd.com'
-    accounts = [
-        ('jiudge1', 'jiudge1'),
-        ('jiudge2', 'jiudge2'),
-        ('jiudge3', 'jiudge3'),
-        ('jiudge4', 'jiudge4'),
-        ('jiudge5', 'jiudge5')
-    ]
+    accounts = zucc_domjudge_accounts
 
 
 if __name__ == '__main__':
