@@ -20,7 +20,7 @@ class SpiderThread(Thread):
             problem_id = task['remote_problem_id']
             code = task['code']
             lang = task['lang']
-            if task['remote_contest_id']:
+            if 'remote_contest_id' in task:
                 res = self.spider.submit_contest_problem(task['remote_contest_id'], problem_id, code, lang)
             else:
                 res = self.spider.submit_problem(problem_id, code, lang)
@@ -83,13 +83,13 @@ class SpiderPool:
         import requests
         resp = requests.get(url).json()
         for oj in resp['data']:
-            try:
-                self.init_spider(oj['name'])
-            except:
-                print(f'Can\'t find {oj["name"]} spider')
+            self.init_spider(oj['name'])
 
     def init_spider(self, oj_name):
-        spider_class = self.get_spider_class(oj_name)
+        try:
+            spider_class = self.get_spider_class(oj_name)
+        except:
+            print(f'Can\'t find {oj_name} spider')
         self.pool[oj_name] = []
         for username, password in spider_class.accounts:
             thread = SpiderThread(spider_class(username, password))

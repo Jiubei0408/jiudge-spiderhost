@@ -132,7 +132,7 @@ class CodeforcesSpider(BaseSpider):
         dic = {
             'GNU G++14 6.4.0': 50,
             'GNU G++17 7.3.0': 54,
-            'GNU G++17 9.2.0 (64 bit, msys 2)': 61,
+            'GNU G++17 9.2.0 (64 bit)': 61,
             'Python 3.8.10': 31,
             'java 11.0.6': 60
         }
