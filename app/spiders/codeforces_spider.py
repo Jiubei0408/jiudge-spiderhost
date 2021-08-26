@@ -16,7 +16,7 @@ class CodeforcesSpider(BaseSpider):
 
     def login(self):
         url = self.base_url + '/enter'
-        resp = self.http.get(url=url)
+        resp = self.http.get(url=url, noprint=True)
         csrf = self._get_csrf_token(resp.text)
         data = {
             'csrf_token': csrf,
