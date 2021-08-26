@@ -83,7 +83,10 @@ class SpiderPool:
         import requests
         resp = requests.get(url).json()
         for oj in resp['data']:
-            self.init_spider(oj['name'])
+            try:
+                self.init_spider(oj['name'])
+            except:
+                print(f'Can\'t find {oj["name"]} spider')
 
     def init_spider(self, oj_name):
         spider_class = self.get_spider_class(oj_name)
