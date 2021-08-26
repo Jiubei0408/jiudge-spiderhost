@@ -1,3 +1,5 @@
+import time
+
 import requests
 from requests import Response
 
@@ -41,6 +43,7 @@ class Http:
         res = self._end_request(res, encoding)
         if not noprint:
             print(method, url, res.status_code)
+        time.sleep(.5)
         return res
 
     @staticmethod
