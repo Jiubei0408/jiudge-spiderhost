@@ -95,6 +95,8 @@ class CodeforcesSpider(BaseSpider):
         verdict = submission['verdict']
         data['result'] = self.change_judge_result(verdict)
         data['remote_result'] = verdict
+        if data['result'] != 'AC':
+            data['remote_result'] = f'''{verdict} on test {submission['passedTestCount'] + 1}'''
         compile_info = self.get_compiler_info(submission_id)
         data['time_used'] = submission['timeConsumedMillis']
         data['memory_used'] = submission['memoryConsumedBytes'] / 1024
