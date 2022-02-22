@@ -23,7 +23,7 @@ class SpiderThread(Thread):
             if 'remote_contest_id' in task:
                 res = self.spider.submit_contest_problem(task['remote_contest_id'], problem_id, code, lang)
             else:
-                res = self.spider.submit_problem(problem_id, code, lang)
+                res = self.spider.submit_problem(problem_id, code, lang, task['submission_id'])
         except Exception as e:
             self.http.post(url=f'{SERVER_URL}/spider/judge_result/{task["submission_id"]}', json={
                 'quest_id': task['quest_id'],

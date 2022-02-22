@@ -42,7 +42,7 @@ class BaseSpider:
     def submit_contest_problem(self, contest_id, problem_id, code, lang):
         pass
 
-    def submit_problem(self, problem_id, code, lang):
+    def submit_problem(self, problem_id, code, lang, submission_id):
         pass
 
     def change_judge_result(self, result):

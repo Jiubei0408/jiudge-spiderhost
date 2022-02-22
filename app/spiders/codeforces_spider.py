@@ -1,9 +1,6 @@
-import base64
 import json
 import re
 import time
-
-from bs4 import BeautifulSoup
 
 from app.spiders.base_spider import BaseSpider
 from app.config.accounts import cf_accounts
@@ -53,7 +50,8 @@ class CodeforcesSpider(BaseSpider):
     def get_contest_meta(self, contest_id):
         pass
 
-    def submit_problem(self, problem_id, code, lang):
+    def submit_problem(self, problem_id, code, lang, submission_id):
+        code = self._add_submission_id_to_code(code, lang, submission_id)
         self.check_login()
         problem_type = 'contest'
         if problem_id.startswith('gym-'):
@@ -142,6 +140,15 @@ class CodeforcesSpider(BaseSpider):
             return dic[lang]
         else:
             raise Exception('unknown language')
+
+    @staticmethod
+    def _add_submission_id_to_code(code, lang, submission_id):
+        if lang in ['GNU G++14 6.4.0', 'GNU G++17 7.3.0', 'GNU G++17 9.2.0 (64 bit)']:
+            return f'//jiudge: {submission_id}\n' + code
+        elif lang == 'Python 3.8.10':
+            return f'# jiudge: {submission_id}\n' + code
+        elif lang == 'java 11.0.6':
+            return f'//jiudge: {submission_id}\n' + code
 
     @staticmethod
     def _get_csrf_token(text):
