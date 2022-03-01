@@ -67,11 +67,12 @@ class CodeforcesSpider(BaseSpider):
             'csrf_token': csrf,
             'action': 'submitSolutionFormSubmitted'
         }
+        time.sleep(1)
         resp = self.http.post(url=url, data=data)
         if len(resp.history) == 0:
             raise Exception('submit failed')
         while True:
-            time.sleep(5)
+            time.sleep(1)
             finished, status = self.get_last_problem_status()
             if finished:
                 return status
