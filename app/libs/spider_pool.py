@@ -17,6 +17,13 @@ class SpiderThread(Thread):
 
     def do_submit(self, task):
         try:
+            self.http.post(url=f'{SERVER_URL}/spider/judge_result/{task["submission_id"]}', json={
+                'quest_id': task['quest_id'],
+                'token': task['token'],
+                'data': {
+                    'result': 'RUNNING'
+                }
+            })
             problem_id = task['remote_problem_id']
             code = task['code']
             lang = task['lang']
@@ -50,11 +57,21 @@ class SpiderThread(Thread):
             }
         })
 
+    def do_crawl_problem_info(self, task):
+        res = self.spider.get_problem_info(task['remote_problem_id'])
+        self.http.post(url=f'{SERVER_URL}/spider/problem_info/{task["problem_id"]}', json={
+            'quest_id': task['quest_id'],
+            'token': task['token'],
+            'data': res
+        })
+
     def resolve_task(self, task):
         if task['type'] == 'submit':
             self.do_submit(task)
-        if task['type'] == 'crawl_contest_info':
+        elif task['type'] == 'crawl_contest_info':
             self.do_crawl_contest_meta(task)
+        elif task['type'] == 'crawl_problem_info':
+            self.do_crawl_problem_info(task)
 
     def run(self) -> None:
         while True:
@@ -65,12 +82,21 @@ class SpiderThread(Thread):
                 continue
             print(self.spider.username, self.spider.password, task)
             try:
-                self.resolve_task(task)
-            except Exception as e:
-                self.http.post(url=SERVER_URL + '/spider/failed', json={
+                self.http.post(url=SERVER_URL + '/spider/update_status', json={
                     'quest_id': task['quest_id'],
                     'token': task['token'],
                     'data': {
+                        'status': 'RUNNING',
+                        'message': 'running...'
+                    }
+                })
+                self.resolve_task(task)
+            except Exception as e:
+                self.http.post(url=SERVER_URL + '/spider/update_status', json={
+                    'quest_id': task['quest_id'],
+                    'token': task['token'],
+                    'data': {
+                        'status': 'FAILED',
                         'message': str(e)
                     }
                 })

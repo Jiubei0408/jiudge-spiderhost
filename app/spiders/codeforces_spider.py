@@ -4,6 +4,7 @@ import time
 
 from app.spiders.base_spider import BaseSpider
 from app.config.accounts import cf_accounts
+from bs4 import BeautifulSoup
 
 
 class CodeforcesSpider(BaseSpider):
@@ -47,16 +48,35 @@ class CodeforcesSpider(BaseSpider):
             'login_req_text': login_res
         }))
 
-    def get_contest_meta(self, contest_id):
-        pass
+    def get_problem_info(self, problem_id):
+        contest_id = problem_id[:-1]
+        problem_index = problem_id[-1]
+        if int(contest_id) > 100000:
+            raise Exception('gym not achieved yet')
+        html_code = self.http.get(url=self.base_url + f'/problemset/problem/{contest_id}/{problem_index}').text
+        soup = BeautifulSoup(html_code, 'lxml')
+        statement = soup.find('div', class_='problem-statement')
+        header = statement.contents[0]
+        remote_problem_url = f'https://codeforces.com/problemset/problem/{contest_id}/{problem_index}'
+        problem_name = header.contents[0].text[3:]
+        time_limit = float(re.search(r'[0-9.]+', header.contents[1].text)[0])
+        space_limit = float(re.search(r'[0-9.]+', header.contents[2].text)[0]) * 1024
+        problem_text = '<div class="problem-statement"><div class="section-title">Statement</div>' + \
+                       ''.join([str(i) for i in statement.contents[1:]]) + '</div>'
+        allowed_lang = ['GNU G++14 6.4.0', 'GNU G++17 7.3.0', 'GNU G++17 9.2.0 (64 bit)',
+                        'Python 3.8.10', 'java 11.0.6']
+        return {
+            'remote_problem_url': remote_problem_url,
+            'problem_name': problem_name,
+            'time_limit': time_limit,
+            'space_limit': space_limit,
+            'problem_text': problem_text,
+            'allowed_lang': allowed_lang
+        }
 
     def submit_problem(self, problem_id, code, lang, submission_id):
         code = self._add_submission_id_to_code(code, lang, submission_id)
         self.check_login()
-        problem_type = 'contest'
-        if problem_id.startswith('gym-'):
-            problem_type = 'gym'
-            problem_id = problem_id[4:]
         url = self.base_url + '/problemset/submit'
         resp = self.http.get(url=url)
         csrf = self._get_csrf_token(resp.text)
