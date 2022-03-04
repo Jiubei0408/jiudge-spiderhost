@@ -1,4 +1,5 @@
 from app.libs.http import Http
+import inspect
 
 
 class BaseSpider:
@@ -11,11 +12,15 @@ class BaseSpider:
         self.password = password
         self.login()
 
+    def __raise_not_achieved(self):
+        func_name = inspect.stack()[1][3]
+        raise Exception(f"{self.__class__.__name__} didn't achieve {func_name}")
+
     def login(self):
-        pass
+        self.__raise_not_achieved()
 
     def check_login(self):
-        pass
+        self.__raise_not_achieved()
 
     def get_contest_meta(self, contest_id):
         """
@@ -31,19 +36,19 @@ class BaseSpider:
             'allowed_lang': [] # 允许提交的语言
         }
         """
-        pass
+        self.__raise_not_achieved()
 
     def get_contest_problem_info(self, contest_id, problem_id):
-        pass
+        self.__raise_not_achieved()
 
     def get_problem_info(self, problem_id):
-        pass
+        self.__raise_not_achieved()
 
     def submit_contest_problem(self, contest_id, problem_id, code, lang):
-        pass
+        self.__raise_not_achieved()
 
     def submit_problem(self, problem_id, code, lang, submission_id):
-        pass
+        self.__raise_not_achieved()
 
     def change_judge_result(self, result):
-        pass
+        self.__raise_not_achieved()
