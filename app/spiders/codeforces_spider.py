@@ -133,7 +133,8 @@ class CodeforcesSpider(BaseSpider):
             'csrf_token': csrf
         }
         time.sleep(1)
-        return self.http.post(url=url, data=data).text.strip('"')
+        resp = self.http.post(url=url, data=data).json()
+        return resp
 
     def change_judge_result(self, result: str):
         result = result.upper()
