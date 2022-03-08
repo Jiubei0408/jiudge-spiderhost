@@ -132,6 +132,7 @@ class CodeforcesSpider(BaseSpider):
             'submissionId': submission_id,
             'csrf_token': csrf
         }
+        time.sleep(1)
         return self.http.post(url=url, data=data).text.strip('"')
 
     def change_judge_result(self, result: str):
