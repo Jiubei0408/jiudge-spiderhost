@@ -104,12 +104,10 @@ class SpiderThread(Thread):
 
 class SpiderPool:
     def __init__(self):
+        from app.config.settings import OJ_LIST
         self.pool = {}
-        url = SERVER_URL + '/oj'
-        import requests
-        resp = requests.get(url).json()
-        for oj in resp['data']:
-            self.init_spider(oj['name'])
+        for oj in OJ_LIST:
+            self.init_spider(oj)
 
     def init_spider(self, oj_name):
         try:
