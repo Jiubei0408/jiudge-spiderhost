@@ -89,6 +89,16 @@ class CodeforcesSpider(BaseSpider):
         time.sleep(1)
         resp = self.http.post(url=url, data=data)
         if len(resp.history) == 0:
+            soup = BeautifulSoup(resp.text, 'lxml')
+            error_span = soup.find('span', class_='error for__source')
+            if error_span:
+                return {
+                    'compile_info': error_span.text,
+                    'time_used': 0,
+                    'memory_used': 0,
+                    'result': 'CE',
+                    'remote_result': ''
+                }
             raise Exception('submit failed')
         while True:
             time.sleep(1)
