@@ -114,6 +114,7 @@ class SpiderPool:
             spider_class = self.get_spider_class(oj_name)
         except:
             print(f'Can\'t find {oj_name} spider')
+            return
         self.pool[oj_name] = []
         for username, password in spider_class.accounts:
             thread = SpiderThread(spider_class(username, password))
