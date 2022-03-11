@@ -101,7 +101,7 @@ class CodeforcesSpider(BaseSpider):
                 }
             raise Exception('submit failed')
         while True:
-            time.sleep(1)
+            time.sleep(2)
             finished, status = self.get_last_problem_status()
             if finished:
                 return status
@@ -115,7 +115,10 @@ class CodeforcesSpider(BaseSpider):
             'remote_result': ''
         }
         url = self.base_url + f'/api/user.status?handle={self.username}&count=1'
-        resp = self.http.get(url=url).json()
+        resp = self.http.get(url=url)
+        if resp.status_code != 200:
+            raise Exception(resp.text)
+        resp = resp.json()
         submission = resp['result'][0]
         submission_id = submission['id']
         if 'verdict' not in submission or submission['verdict'] == 'TESTING':
