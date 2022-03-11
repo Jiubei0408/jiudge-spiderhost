@@ -1,5 +1,6 @@
 import importlib
 import time
+import traceback
 from threading import Thread
 from app.libs.quest_queue import queue
 from app.config.settings import *
@@ -97,7 +98,7 @@ class SpiderThread(Thread):
                     'token': task['token'],
                     'data': {
                         'status': 'FAILED',
-                        'message': str(e)
+                        'message': traceback.format_exc()
                     }
                 })
 
