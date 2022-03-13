@@ -116,9 +116,10 @@ class CodeforcesSpider(BaseSpider):
         }
         url = self.base_url + f'/api/user.status?handle={self.username}&count=1'
         resp = self.http.get(url=url)
-        if resp.status_code != 200:
+        try:
+            resp = resp.json()
+        except Exception:
             raise Exception(resp.text)
-        resp = resp.json()
         submission = resp['result'][0]
         submission_id = submission['id']
         if 'verdict' not in submission or submission['verdict'] == 'TESTING':
