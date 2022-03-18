@@ -101,7 +101,7 @@ class CodeforcesSpider(BaseSpider):
                 }
             raise Exception('submit failed')
         while True:
-            time.sleep(2)
+            time.sleep(3)
             finished, status = self.get_last_problem_status()
             if finished:
                 return status
