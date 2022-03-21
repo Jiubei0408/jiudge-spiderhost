@@ -49,7 +49,7 @@ class CodeforcesSpider(BaseSpider):
         }))
 
     def get_problem_info(self, problem_id):
-        contest_id, problem_index = re.findall(r'(.*)([A-F].*)', problem_id)[0]
+        contest_id, problem_index = re.findall(r'(.*)([A-Z].*)', problem_id)[0]
         if int(contest_id) > 100000:
             raise Exception('gym not achieved yet')
         html_code = self.http.get(url=self.base_url + f'/problemset/problem/{contest_id}/{problem_index}').text
