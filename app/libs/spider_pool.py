@@ -1,11 +1,12 @@
 import importlib
+import json
 import time
 import traceback
 from threading import Thread
-from app.libs.quest_queue import queue
+
 from app.config.settings import *
 from app.libs.http import Http
-import json
+from app.libs.quest_queue import queue
 from app.spiders.base_spider import BaseSpider
 
 
@@ -25,13 +26,24 @@ class SpiderThread(Thread):
                     'result': 'RUNNING'
                 }
             })
-            problem_id = task['remote_problem_id']
-            code = task['code']
-            lang = task['lang']
-            if 'remote_contest_id' in task:
-                res = self.spider.submit_contest_problem(task['remote_contest_id'], problem_id, code, lang)
-            else:
-                res = self.spider.submit_problem(problem_id, code, lang, task['submission_id'])
+            retry_cnt = 3
+            while retry_cnt > 0:
+                try:
+                    retry_cnt -= 1
+                    problem_id = task['remote_problem_id']
+                    code = task['code']
+                    lang = task['lang']
+                    if 'remote_contest_id' in task:
+                        res = self.spider.submit_contest_problem(task['remote_contest_id'], problem_id, code, lang)
+                    else:
+                        res = self.spider.submit_problem(problem_id, code, lang, task['submission_id'])
+                    break
+                except Exception as e:
+                    if retry_cnt > 0:
+                        print('retring task:', task['quest_id'])
+                        continue
+                    else:
+                        raise e
         except Exception as e:
             self.http.post(url=f'{SERVER_URL}/spider/judge_result/{task["submission_id"]}', json={
                 'quest_id': task['quest_id'],
