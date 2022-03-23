@@ -47,6 +47,7 @@ class PojSpider(BaseSpider):
 
     def submit_problem(self, problem_id, code, lang, submission_id):
         code = self._add_submission_id_to_code(code, lang, submission_id)
+        self.check_login()
         url = self.base_url + '/submit'
         data = {
             'problem_id': problem_id,
