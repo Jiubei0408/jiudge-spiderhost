@@ -46,7 +46,7 @@ class PojSpider(BaseSpider):
         }))
 
     def submit_problem(self, problem_id, code, lang, submission_id):
-        code = self._add_submission_id_to_code(code, lang, submission_id)
+        code = self._add_additional_message_to_code(code, lang, submission_id)
         self.check_login()
         url = self.base_url + '/submit'
         data = {
@@ -114,11 +114,12 @@ class PojSpider(BaseSpider):
             return ''
 
     @staticmethod
-    def _add_submission_id_to_code(code, lang, submission_id):
+    def _add_additional_message_to_code(code, lang, submission_id):
+        timestamp = int(time.time())
         if lang == 'G++':
-            return f'//jiudge: {submission_id}\n' + code
+            return f'//jiudge: {submission_id}: {timestamp}\n' + code
         elif lang == 'Java':
-            return f'//jiudge: {submission_id}\n' + code
+            return f'//jiudge: {submission_id}: {timestamp}\n' + code
         else:
             raise Exception('unknown language')
 

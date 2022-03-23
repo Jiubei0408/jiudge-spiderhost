@@ -74,7 +74,7 @@ class CodeforcesSpider(BaseSpider):
         }
 
     def submit_problem(self, problem_id, code, lang, submission_id):
-        code = self._add_submission_id_to_code(code, lang, submission_id)
+        code = self._add_additional_message_to_code(code, lang, submission_id)
         self.check_login()
         url = self.base_url + '/problemset/submit'
         resp = self.http.get(url=url)
@@ -179,13 +179,14 @@ class CodeforcesSpider(BaseSpider):
             raise Exception('unknown language')
 
     @staticmethod
-    def _add_submission_id_to_code(code, lang, submission_id):
+    def _add_additional_message_to_code(code, lang, submission_id):
+        timestamp = int(time.time())
         if lang in ['GNU G++14 6.4.0', 'GNU G++17 7.3.0', 'GNU G++17 9.2.0 (64 bit)']:
-            return f'//jiudge: {submission_id}\n' + code
+            return f'//jiudge: {submission_id}: {timestamp}\n' + code
         elif lang == 'Python 3.8.10':
-            return f'# jiudge: {submission_id}\n' + code
+            return f'# jiudge: {submission_id}: {timestamp}\n' + code
         elif lang == 'java 11.0.6':
-            return f'//jiudge: {submission_id}\n' + code
+            return f'//jiudge: {submission_id}: {timestamp}\n' + code
 
     @staticmethod
     def _get_csrf_token(text):
