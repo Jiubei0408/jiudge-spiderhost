@@ -89,7 +89,7 @@ class PojSpider(BaseSpider):
         tds = submission.find_all('td')
         submission_id = tds[0].text
         verdict = tds[3].text
-        if verdict == 'Running & Judging':
+        if verdict in ['Waiting', 'Running & Judging']:
             return False, data
         data['result'] = self.change_judge_result(verdict)
         data['remote_result'] = verdict
