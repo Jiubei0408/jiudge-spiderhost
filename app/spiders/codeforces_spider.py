@@ -50,13 +50,21 @@ class CodeforcesSpider(BaseSpider):
 
     def get_problem_info(self, problem_id):
         contest_id, problem_index = re.findall(r'(.*)([A-Z].*)', problem_id)[0]
+        is_gym = False
         if int(contest_id) > 100000:
-            raise Exception('gym not achieved yet')
-        html_code = self.http.get(url=self.base_url + f'/problemset/problem/{contest_id}/{problem_index}').text
+            is_gym = True
+        if is_gym:
+            url = self.base_url + f'/gym/{contest_id}/problem/{problem_index}'
+        else:
+            url = self.base_url + f'/problemset/problem/{contest_id}/{problem_index}'
+        html_code = self.http.get(url=url).text
         soup = BeautifulSoup(html_code, 'lxml')
         statement = soup.find('div', class_='problem-statement')
         header = statement.contents[0]
-        remote_problem_url = f'https://codeforces.com/problemset/problem/{contest_id}/{problem_index}'
+        if is_gym:
+            remote_problem_url = url
+        else:
+            remote_problem_url = url
         problem_name = header.contents[0].text[3:]
         time_limit = float(re.search(r'[0-9.]+', header.contents[1].text)[0])
         space_limit = float(re.search(r'[0-9.]+', header.contents[2].text)[0]) * 1024
