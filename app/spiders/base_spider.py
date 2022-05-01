@@ -5,9 +5,10 @@ import inspect
 class BaseSpider:
     accounts = []
     oj_name = ''
+    http_class = Http
 
     def __init__(self, username, password):
-        self.http = Http()
+        self.http = self.http_class()
         self.username = username
         self.password = password
         self.login()

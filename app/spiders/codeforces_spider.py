@@ -5,12 +5,35 @@ import time
 from app.spiders.base_spider import BaseSpider
 from app.config.accounts import cf_accounts
 from bs4 import BeautifulSoup
+from Crypto.Cipher import AES
+from app.libs.http import Http
+from binascii import hexlify, unhexlify
+
+
+class CodeforcesHttp(Http):
+    def _end_request(self, res, encoding):
+        if 'Redirecting...' not in res.text:
+            return res
+        return self._set_RCPC(res)
+
+    def _set_RCPC(self, resp):
+        res = re.findall('toNumbers\("(.+?)"\)', resp.text)
+        text = unhexlify(res[2].encode('utf-8'))
+        key = unhexlify(res[0].encode('utf-8'))
+        iv = unhexlify(res[1].encode('utf-8'))
+
+        aes = AES.new(key, AES.MODE_CBC, iv)
+        res = hexlify(aes.decrypt(text)).decode('utf-8')
+        self.sess.cookies.set('RCPC', res, domain='.codeforces.com', path='/')
+        url = re.findall('href="(.+?)"', resp.text)[0]
+        return self.get(url=url)
 
 
 class CodeforcesSpider(BaseSpider):
     oj_name = 'codeforces'
     accounts = cf_accounts
     base_url = 'https://codeforces.com'
+    http_class = CodeforcesHttp
 
     def login(self):
         url = self.base_url + '/enter'
