@@ -63,7 +63,6 @@ class CodeforcesSpider(BaseSpider):
                 return True
             login_res = self.login()
             cnt += 1
-            time.sleep(1)
         print(self.oj_name + ' login failed: ' + self.username)
         raise Exception(json.dumps({
             'type': 'login error',
@@ -117,7 +116,6 @@ class CodeforcesSpider(BaseSpider):
             'csrf_token': csrf,
             'action': 'submitSolutionFormSubmitted'
         }
-        time.sleep(1)
         resp = self.http.post(url=url, data=data)
         if len(resp.history) == 0:
             soup = BeautifulSoup(resp.text, 'lxml')
@@ -132,7 +130,6 @@ class CodeforcesSpider(BaseSpider):
                 }
             raise Exception('submit failed')
         while True:
-            time.sleep(3)
             finished, status = self.get_last_problem_status()
             if finished:
                 return status
@@ -145,31 +142,26 @@ class CodeforcesSpider(BaseSpider):
             'result': 'PENDING',
             'remote_result': ''
         }
-        url = self.base_url + f'/api/user.status?handle={self.username}&count=1'
+        url = self.base_url + f'/problemset/status?my=on'
         resp = self.http.get(url=url)
-        try:
-            resp = resp.json()
-        except Exception:
-            raise Exception(resp.text)
-        submission = resp['result'][0]
-        submission_id = submission['id']
-        if 'verdict' not in submission or submission['verdict'] == 'TESTING':
+        soup = BeautifulSoup(resp.text, 'lxml')
+        tr = soup.find_all('tr', attrs={'data-submission-id': re.compile(r'\d+')})[0]
+        tds = tr.find_all('td')
+        submission_id = tds[0].text.strip()
+        verdict = tds[5].text.strip()
+        if verdict.startswith('Running on test') or verdict.startswith('In queue'):
             return False, data
-        verdict = submission['verdict']
-        data['result'] = self.change_judge_result(verdict)
+        result = self.change_judge_result(verdict)
+        data['result'] = result
         data['remote_result'] = verdict
-        if data['result'] != 'AC':
-            data['remote_result'] = f'''{verdict} on test {submission['passedTestCount'] + 1}'''
-        time.sleep(1)
         compile_info = self.get_compiler_info(submission_id)
-        data['time_used'] = submission['timeConsumedMillis']
-        data['memory_used'] = submission['memoryConsumedBytes'] / 1024
+        data['time_used'] = int(re.findall(r'\d+', tds[-2].text)[0])
+        data['memory_used'] = int(re.findall(r'\d+', tds[-1].text)[0])
         if compile_info != '':
             data['compile_info'] = compile_info
         return True, data
 
     def get_compiler_info(self, submission_id):
-        self.check_login()
         url = self.base_url + '/data/judgeProtocol'
         resp = self.http.get(url=self.base_url + '/problemset/status?my=on')
         csrf = self._get_csrf_token(resp.text)
@@ -177,22 +169,21 @@ class CodeforcesSpider(BaseSpider):
             'submissionId': submission_id,
             'csrf_token': csrf
         }
-        time.sleep(1)
         resp = self.http.post(url=url, data=data).json()
         return resp
 
     def change_judge_result(self, result: str):
-        result = result.upper()
-        dic = {
-            'OK': 'AC',
-            'COMPILATION_ERROR': 'CE',
-            'TIME_LIMIT_EXCEEDED': 'TLE',
-            'MEMORY_LIMIT_EXCEEDED': 'MLE',
-            'RUNTIME_ERROR': 'RE',
-            'WRONG_ANSWER': 'WA'
+        prefix_dic = {
+            'Accepted': 'AC',
+            'Compilation error': 'CE',
+            'Time limit exceeded': 'TLE',
+            'Memory limit exceeded': 'MLE',
+            'Runtime error': 'RE',
+            'Wrong answer': 'WA'
         }
-        if result in dic:
-            return dic[result]
+        for prefix, res in prefix_dic.items():
+            if result.startswith(prefix):
+                return res
         return 'UNKNOWN'
 
     @staticmethod
