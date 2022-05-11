@@ -149,7 +149,7 @@ class CodeforcesSpider(BaseSpider):
         tds = tr.find_all('td')
         submission_id = tds[0].text.strip()
         verdict = tds[5].text.strip()
-        if verdict.startswith('Running on test') or verdict.startswith('In queue'):
+        if verdict.startswith('Running') or verdict.startswith('In queue'):
             return False, data
         result = self.change_judge_result(verdict)
         data['result'] = result
