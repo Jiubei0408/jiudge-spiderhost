@@ -142,7 +142,7 @@ class CodeforcesSpider(BaseSpider):
             'result': 'PENDING',
             'remote_result': ''
         }
-        url = self.base_url + f'/problemset/status?my=on'
+        url = self.base_url + f'/submissions/{self.username}'
         resp = self.http.get(url=url)
         soup = BeautifulSoup(resp.text, 'lxml')
         tr = soup.find_all('tr', attrs={'data-submission-id': re.compile(r'\d+')})[0]
