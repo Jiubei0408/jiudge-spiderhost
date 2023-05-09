@@ -1,39 +1,36 @@
-import base64
 import json
 import re
 import time
-
+import base64
+from urllib.parse import quote
 from bs4 import BeautifulSoup
 
-from app.config.accounts import poj_accounts
+from app.libs.http import Http
 from app.spiders.base_spider import BaseSpider
+from app.config.accounts import hdu_accounts
 
 
-class PojSpider(BaseSpider):
-    oj_name = 'poj'
-    accounts = poj_accounts
-    base_url = 'http://poj.org'
+class HduSpider(BaseSpider):
+    oj_name = 'hdu'
+    accounts = hdu_accounts
+    base_url = 'https://acm.hdu.edu.cn'
+    http_class = Http
 
     def login(self):
-        url = self.base_url + '/login'
+        url = self.base_url + '/userloginex.php?action=login'
         data = {
-            'user_id1': self.username,
-            'password1': self.password,
-            'B1': 'login',
-            'url': '.'
+            'username': self.username,
+            'userpass': self.password,
+            'login': 'Sign In'
         }
-        resp = self.http.post(url=url, data=data)
-        print('login poj:' + self.username)
-        return {
-            'resp_text': resp.text,
-            'data': data
-        }
+        self.http.post(url=url, data=data)
+        print('login hdu:' + self.username)
 
     def check_login(self):
         cnt = 0
         while cnt < 10:
             resp = self.http.get(url=self.base_url)
-            if f'userstatus?user_id={self.username}' in resp.text:
+            if f'userstatus.php?user={self.username}' in resp.text:
                 return True
             login_res = self.login()
             cnt += 1
@@ -48,17 +45,16 @@ class PojSpider(BaseSpider):
     def submit_problem(self, problem_id, code, lang, submission_id):
         code = self._add_additional_message_to_code(code, lang, submission_id)
         self.check_login()
-        url = self.base_url + '/submit'
+        url = self.base_url + '/submit.php?action=submit'
         data = {
-            'problem_id': problem_id,
-            'language': self._get_lang_id(lang),
-            'source': base64.encodebytes(code.encode()),
-            'submit': 'Submit',
-            'encoded': 1
+            'check': '0',
+            '_usercode': base64.encodebytes(quote(code).encode()),
+            'problemid': problem_id,
+            'language': '0'
         }
         resp = self.http.post(url=url, data=data)
         soup = BeautifulSoup(resp.text, 'lxml')
-        if 'Error Occurred' in resp.text:
+        if 'ERROR(s) occurred.' in resp.text:
             error = soup.find('li')
             if error:
                 return {
@@ -68,6 +64,7 @@ class PojSpider(BaseSpider):
                     'result': 'CE',
                     'remote_result': ''
                 }
+
         while True:
             time.sleep(3)
             finished, status = self.get_last_problem_status()
@@ -82,14 +79,15 @@ class PojSpider(BaseSpider):
             'result': 'PENDING',
             'remote_result': ''
         }
-        url = self.base_url + f'/status?user_id={self.username}'
+        url = self.base_url + f'/status.php?user=jiudge001'
         resp = self.http.get(url=url)
         soup = BeautifulSoup(resp.text, 'lxml')
-        submission = soup.select('tr.in')[0].parent.find_all('tr')[1]
+        submission = soup.select('.table_text')[0].find_all('tr')[1]
         tds = submission.find_all('td')
         submission_id = tds[0].text
-        verdict = tds[3].text
-        if verdict in ['Waiting', 'Running & Judging', 'Compiling']:
+        verdict = tds[2].text
+        if verdict in ['Queuing', 'Running']:
+            print('test', verdict)
             return False, data
         data['result'] = self.change_judge_result(verdict)
         data['remote_result'] = verdict
@@ -104,7 +102,7 @@ class PojSpider(BaseSpider):
         return True, data
 
     def get_compiler_info(self, submission_id):
-        url = self.base_url + f'//showcompileinfo?solution_id={submission_id}'
+        url = self.base_url + f'/viewerror.php?rid={submission_id}'
         resp = self.http.get(url=url)
         soup = BeautifulSoup(resp.text, 'lxml')
         e = soup.find('pre')
@@ -134,32 +132,38 @@ class PojSpider(BaseSpider):
         else:
             raise Exception('unknown language')
 
-    def change_judge_result(self, result):
+    def change_judge_result(self, result: str):
         dic = {
             'Accepted': 'AC',
             'Presentation Error': 'PE',
             'Time Limit Exceeded': 'TLE',
             'Memory Limit Exceeded': 'MLE',
             'Wrong Answer': 'WA',
-            'Runtime Error': 'RE',
-            'Compile Error': 'CE',
+            'Compilation Error': 'CE',
             'Output Limit Exceeded': 'WA'
         }
         if result in dic:
             return dic[result]
+        if result.startswith('Runtime Error'):
+            return 'RE'
         return 'UNKNOWN'
 
     def get_problem_info(self, problem_id):
-        url = self.base_url + f'/problem?id={problem_id}'
-        resp = self.http.get(url=url)
+        url = self.base_url + f'/showproblem.php?pid={problem_id}'
+        resp = self.http.get(url=url, encoding='gb2312')
         soup = BeautifulSoup(resp.text, 'lxml')
-        st = soup.select_one('.ptt').parent
-        st = [i for i in st.contents if i != '\n'][1:-2]
-        problem_text = ''.join([str(e) for e in st[2:]])
-        problem_name = st[0].text
-        limits = st[1].find_all('td')
-        time_limit = float(re.findall(r'[0-9.]+', limits[0].text)[0]) / 1000
-        space_limit = float(re.findall(r'[0-9.]+', limits[2].text)[0])
+        titles = soup.select('.panel_title')
+        contents = soup.select('.panel_content')
+        problem_text = ''
+        for i, title in enumerate(titles):
+            if title.text in ['Source']:
+                continue
+            problem_text += str(title)
+            problem_text += str(contents[i])
+
+        problem_name = soup.find('h1').text
+        time_limit = float(re.findall(r'([0-9.]+) MS', resp.text)[0]) / 1000
+        space_limit = float(re.findall(r'([0-9.]+) K', resp.text)[0])
         allowed_lang = ['G++', 'Java']
         return {
             'remote_problem_url': url,
