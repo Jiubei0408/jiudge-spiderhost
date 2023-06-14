@@ -86,8 +86,7 @@ class HduSpider(BaseSpider):
         tds = submission.find_all('td')
         submission_id = tds[0].text
         verdict = tds[2].text
-        if verdict in ['Queuing', 'Running']:
-            print('test', verdict)
+        if verdict in ['Queuing', 'Running', 'Compiling']:
             return False, data
         data['result'] = self.change_judge_result(verdict)
         data['remote_result'] = verdict
