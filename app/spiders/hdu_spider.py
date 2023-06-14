@@ -50,7 +50,7 @@ class HduSpider(BaseSpider):
             'check': '0',
             '_usercode': base64.encodebytes(quote(code).encode()),
             'problemid': problem_id,
-            'language': '0'
+            'language': self._get_lang_id(lang)
         }
         resp = self.http.post(url=url, data=data)
         soup = BeautifulSoup(resp.text, 'lxml')
@@ -125,7 +125,8 @@ class HduSpider(BaseSpider):
     def _get_lang_id(lang):
         dic = {
             'G++': 0,
-            'Java': 2
+            'C++': 2,
+            'Java': 5
         }
         if lang in dic:
             return dic[lang]
@@ -164,7 +165,7 @@ class HduSpider(BaseSpider):
         problem_name = soup.find('h1').text
         time_limit = float(re.findall(r'([0-9.]+) MS', resp.text)[0]) / 1000
         space_limit = float(re.findall(r'([0-9.]+) K', resp.text)[0])
-        allowed_lang = ['G++', 'Java']
+        allowed_lang = ['G++', 'C++', 'Java']
         return {
             'remote_problem_url': url,
             'problem_name': problem_name,
