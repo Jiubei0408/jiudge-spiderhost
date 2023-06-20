@@ -113,9 +113,7 @@ class HduSpider(BaseSpider):
     @staticmethod
     def _add_additional_message_to_code(code, lang, submission_id):
         timestamp = int(time.time())
-        if lang == 'G++':
-            return f'//jiudge: {submission_id}: {timestamp}\n' + code
-        elif lang == 'Java':
+        if lang in ['G++', 'C++', 'Java']:
             return f'//jiudge: {submission_id}: {timestamp}\n' + code
         else:
             raise Exception('unknown language')
