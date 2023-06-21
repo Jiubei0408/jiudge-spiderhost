@@ -79,7 +79,7 @@ class HduSpider(BaseSpider):
             'result': 'PENDING',
             'remote_result': ''
         }
-        url = self.base_url + f'/status.php?user=jiudge001'
+        url = self.base_url + f'/status.php?user={self.username}'
         resp = self.http.get(url=url)
         soup = BeautifulSoup(resp.text, 'lxml')
         submission = soup.select('.table_text')[0].find_all('tr')[1]
