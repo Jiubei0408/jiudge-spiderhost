@@ -117,3 +117,4 @@ dmypy.json
 
 app/config/secure.py
 app/config/accounts.py
+.DS_Store
