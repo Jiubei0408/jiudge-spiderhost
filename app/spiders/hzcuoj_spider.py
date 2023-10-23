@@ -184,6 +184,7 @@ class HzcuojSpider(BaseSpider):
         }
 
     def change_html(self, html: str):
+        if 'href' in html: return html
         html = html.replace('<', '$<$')
         html = html.replace('>', '$>$')
         html = html.replace('&', '$&$')
