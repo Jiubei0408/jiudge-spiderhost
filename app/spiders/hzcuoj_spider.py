@@ -149,9 +149,9 @@ class HzcuojSpider(BaseSpider):
         time_limit = float(resp['timeLimit']) / 1000
         space_limit = resp['memoryLimit']
 
-        problem_text = f'<div class="problem-statement"><div class="section-title">Statement</div><div><p>{resp["description"]}</p></div>'
-        problem_text += f'<div class="input-specification"><div class="section-title">Input</div><p>{resp["input"]}</p></div>'
-        problem_text += f'<div class="output-specification"><div class="section-title">Output</div><p>{resp["output"]}</p></div>'
+        problem_text = f'<div class="problem-statement"><div class="section-title">Statement</div><div><p>{self.change_html(resp["description"])}</p></div>'
+        problem_text += f'<div class="input-specification"><div class="section-title">Input</div><p>{self.change_html(resp["input"])}</p></div>'
+        problem_text += f'<div class="output-specification"><div class="section-title">Output</div><p>{self.change_html(resp["output"])}</p></div>'
         samples = json.loads(resp['samples'])
         problem_text += '<div class="sample-tests"><div class="section-title">Example</div>'
         for sample in samples:
@@ -169,10 +169,10 @@ class HzcuojSpider(BaseSpider):
             '''
         problem_text += '</div>'
         if len(resp['hint']) > 0:
-            problem_text += f'<div class="note"><div class="section-title">Note</div><p>{resp["hint"]}</p></div>'
+            problem_text += f'<div class="note"><div class="section-title">Note</div><p>{self.change_html(resp["hint"])}</p></div>'
         problem_text += '</div>'
 
-        print(problem_text)
+        # print(problem_text)
         allowed_lang = ['C', 'C++']
         return {
             'remote_problem_url': f'https://zuccoj.zuccacm.top/#/problem/{problem_id}/description',
@@ -183,6 +183,8 @@ class HzcuojSpider(BaseSpider):
             'allowed_lang': allowed_lang
         }
 
-if __name__ == '__main__':
-    oj = HzcuojSpider('jiudge1', 'zuccacm')
-    print(oj.get_problem_info(1000))
+    def change_html(self, html: str):
+        html = html.replace('<', '$<$')
+        html = html.replace('>', '$>$')
+        html = html.replace('&', '$&$')
+        return html
