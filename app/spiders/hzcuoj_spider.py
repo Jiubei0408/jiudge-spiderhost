@@ -149,9 +149,9 @@ class HzcuojSpider(BaseSpider):
         time_limit = float(resp['timeLimit']) / 1000
         space_limit = resp['memoryLimit']
 
-        problem_text = f'<div class="problem-statement"><div class="section-title">Statement</div><div><p>{self.change_html(resp["description"])}</p></div>'
-        problem_text += f'<div class="input-specification"><div class="section-title">Input</div><p>{self.change_html(resp["input"])}</p></div>'
-        problem_text += f'<div class="output-specification"><div class="section-title">Output</div><p>{self.change_html(resp["output"])}</p></div>'
+        problem_text = f'<div class="problem-statement"><div class="section-title">Statement</div><div>{self.change_html(resp["description"])}</div>'
+        problem_text += f'<div class="input-specification"><div class="section-title">Input</div>{self.change_html(resp["input"])}</div>'
+        problem_text += f'<div class="output-specification"><div class="section-title">Output</div>{self.change_html(resp["output"])}</div>'
         samples = json.loads(resp['samples'])
         problem_text += '<div class="sample-tests"><div class="section-title">Example</div>'
         for sample in samples:
@@ -169,7 +169,7 @@ class HzcuojSpider(BaseSpider):
             '''
         problem_text += '</div>'
         if len(resp['hint']) > 0:
-            problem_text += f'<div class="note"><div class="section-title">Note</div><p>{self.change_html(resp["hint"])}</p></div>'
+            problem_text += f'<div class="note"><div class="section-title">Note</div>{self.change_html(resp["hint"])}</div>'
         problem_text += '</div>'
 
         # print(problem_text)
@@ -184,8 +184,13 @@ class HzcuojSpider(BaseSpider):
         }
 
     def change_html(self, html: str):
-        if 'href' in html: return html
-        html = html.replace('<', '$<$')
-        html = html.replace('>', '$>$')
-        html = html.replace('&', '$&$')
-        return html
+        if 'href' in html:
+            return f'<p>{html}</p>'
+        res = html.split('\n')
+        s = ''
+        for i in res:
+            i = i.replace('<', '$<$')
+            i = i.replace('>', '$>$')
+            i = i.replace('&', '$&$')
+            s += f'<p>{i}</p>'
+        return s
