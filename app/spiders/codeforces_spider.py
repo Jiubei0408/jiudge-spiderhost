@@ -1,6 +1,7 @@
 import json
 import re
 import time
+import cloudscraper
 
 from app.spiders.base_spider import BaseSpider
 from app.config.accounts import cf_accounts
@@ -11,10 +12,14 @@ from binascii import hexlify, unhexlify
 
 
 class CodeforcesHttp(Http):
+    def __init__(self):
+        super().__init__()
+        self.sess = cloudscraper.create_scraper()
+
     def _end_request(self, res, encoding):
-        if 'Redirecting...' not in res.text:
-            return res
-        return self._set_RCPC(res)
+        if 'Redirecting...' in res.text:
+            return self._set_RCPC(res)
+        return res
 
     def _set_RCPC(self, resp):
         res = re.findall('toNumbers\("(.+?)"\)', resp.text)
@@ -36,7 +41,7 @@ class CodeforcesSpider(BaseSpider):
     http_class = CodeforcesHttp
 
     def login(self):
-        url = self.base_url + '/enter'
+        url = self.base_url
         resp = self.http.get(url=url, noprint=True)
         csrf = self._get_csrf_token(resp.text)
         data = {
@@ -47,7 +52,7 @@ class CodeforcesSpider(BaseSpider):
             '_tta': 176,
             'remember': 'on'
         }
-        resp = self.http.post(url=url, data=data)
+        resp = self.http.post(url=url+'/enter', data=data)
         print('login:' + self.username)
         return {
             'resp_text': resp.text,
@@ -212,4 +217,7 @@ class CodeforcesSpider(BaseSpider):
 
     @staticmethod
     def _get_csrf_token(text):
-        return re.findall(r'csrf=\'(.+?)\'', text)[0]
+        res = re.findall(r'csrf=\'(.+?)\'', text)
+        if len(res) > 0:
+            return res[0]
+        return ''
