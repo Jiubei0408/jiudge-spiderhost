@@ -5,6 +5,7 @@ import cloudscraper
 
 from app.spiders.base_spider import BaseSpider
 from app.config.accounts import cf_accounts
+from app.config.settings import ALLOW_LANG_FOR_CODEFORCES
 from bs4 import BeautifulSoup
 from Crypto.Cipher import AES
 from app.libs.http import Http
@@ -97,8 +98,7 @@ class CodeforcesSpider(BaseSpider):
         space_limit = float(re.search(r'[0-9.]+', header.contents[2].text)[0]) * 1024
         problem_text = '<div class="problem-statement"><div class="section-title">Statement</div>' + \
                        ''.join([str(i) for i in statement.contents[1:]]) + '</div>'
-        allowed_lang = ['GNU G++14 6.4.0', 'GNU G++17 7.3.0', 'GNU G++17 9.2.0 (64 bit)',
-                        'Python 3.8.10', 'java 11.0.6']
+        allowed_lang = list(ALLOW_LANG_FOR_CODEFORCES.keys())
         return {
             'remote_problem_url': remote_problem_url,
             'problem_name': problem_name,
@@ -193,22 +193,15 @@ class CodeforcesSpider(BaseSpider):
 
     @staticmethod
     def _get_lang_id(lang):
-        dic = {
-            'GNU G++14 6.4.0': 50,
-            'GNU G++17 7.3.0': 54,
-            'GNU G++17 9.2.0 (64 bit)': 61,
-            'Python 3.8.10': 31,
-            'java 11.0.6': 60
-        }
-        if lang in dic:
-            return dic[lang]
+        if lang in ALLOW_LANG_FOR_CODEFORCES:
+            return ALLOW_LANG_FOR_CODEFORCES[lang]
         else:
             raise Exception('unknown language')
 
     @staticmethod
     def _add_additional_message_to_code(code, lang, submission_id):
         timestamp = int(time.time())
-        if lang in ['GNU G++14 6.4.0', 'GNU G++17 7.3.0', 'GNU G++17 9.2.0 (64 bit)']:
+        if lang in ALLOW_LANG_FOR_CODEFORCES:
             return f'//jiudge: {submission_id}: {timestamp}\n' + code
         elif lang == 'Python 3.8.10':
             return f'# jiudge: {submission_id}: {timestamp}\n' + code
